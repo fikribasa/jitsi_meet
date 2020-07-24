@@ -1,6 +1,7 @@
 package com.gunschu.jitsi_meet
 
 import android.app.Activity
+import android.content.Intent
 import android.util.Log
 import androidx.annotation.NonNull
 import io.flutter.embedding.engine.plugins.FlutterPlugin
@@ -15,6 +16,7 @@ import io.flutter.plugin.common.PluginRegistry.Registrar
 import org.jitsi.meet.sdk.JitsiMeetConferenceOptions
 import org.jitsi.meet.sdk.JitsiMeetUserInfo
 import java.net.URL
+
 
 /** JitsiMeetPlugin */
 public class JitsiMeetPlugin() : FlutterPlugin, MethodCallHandler, ActivityAware {
@@ -73,6 +75,7 @@ public class JitsiMeetPlugin() : FlutterPlugin, MethodCallHandler, ActivityAware
         const val JITSI_PLUGIN_TAG = "JITSI_MEET_PLUGIN"
         const val JITSI_METHOD_CHANNEL = "jitsi_meet"
         const val JITSI_EVENT_CHANNEL = "jitsi_meet_events"
+        const val JITSI_MEETING_CLOSE = "JITSI_MEETING_CLOSE"
     }
 
     /**
@@ -85,6 +88,9 @@ public class JitsiMeetPlugin() : FlutterPlugin, MethodCallHandler, ActivityAware
         when (call.method) {
             "joinMeeting" -> {
                 joinMeeting(call, result)
+            }
+            "closeMeeting" -> {
+                closeMeeting(call, result)
             }
             else -> result.notImplemented()
         }
@@ -112,15 +118,16 @@ public class JitsiMeetPlugin() : FlutterPlugin, MethodCallHandler, ActivityAware
         }
 
         var serverURLString = call.argument<String>("serverURL")
-        if (serverURLString == null){
+        if (serverURLString == null) {
             serverURLString = "https://meet.jit.si";
         }
         val serverURL = URL(serverURLString)
         Log.d(JITSI_PLUGIN_TAG, "Server URL: $serverURL, $serverURLString")
 
-        // Build options object for joining the conference. The SDK will merge the default
-        // one we set earlier and this one when joining.
-        val options = JitsiMeetConferenceOptions.Builder()
+        val optionsBuilder = JitsiMeetConferenceOptions.Builder()
+
+        // Set meeting options
+        optionsBuilder
                 .setServerURL(serverURL)
                 .setRoom(room)
                 .setSubject(call.argument("subject"))
@@ -129,20 +136,25 @@ public class JitsiMeetPlugin() : FlutterPlugin, MethodCallHandler, ActivityAware
                 .setAudioOnly(call.argument("audioOnly") ?: false)
                 .setVideoMuted(call.argument("videoMuted") ?: false)
                 .setUserInfo(userInfo)
-                .setFeatureFlag("pip.enabled", call.argument("pipEnabled") ?: false)
-                .setFeatureFlag("add-people.enabled", call.argument("addpeopleEnabled") ?: false)
-                .setFeatureFlag("calendar.enabled", call.argument("calendarEnabled") ?: false)
-                .setFeatureFlag("chat.enabled", call.argument("chatEnabled") ?: false)
-                .setFeatureFlag("invite.enabled", call.argument("inviteEnabled") ?: false)
-                .setFeatureFlag("live-streaming.enabled", false)
-                .setFeatureFlag("recording.enabled", false)
-                .setFeatureFlag("toolbox.alwaysVisible", false)
-                .setFeatureFlag("welcomepage.enabled", false)
-                .setWelcomePageEnabled(false)
-                .build()
+
+        // Add feature flags into options, reading given Map
+        if(call.argument<HashMap<String, Boolean>?>("featureFlags") != null)
+        {
+            val featureFlags = call.argument<HashMap<String, Boolean>>("featureFlags")
+            featureFlags!!.forEach { (key, value) -> optionsBuilder.setFeatureFlag(key, value) }
+        }
+
+        // Build with meeting options and feature flags
+        val options = optionsBuilder.build()
 
         JitsiMeetPluginActivity.launchActivity(activity, options)
         result.success("Successfully joined room: $room")
+    }
+
+    private fun closeMeeting(call: MethodCall, result: Result) {
+        val intent = Intent(JITSI_MEETING_CLOSE)
+        activity?.sendBroadcast(intent)
+        result.success(null)
     }
 
     /**
