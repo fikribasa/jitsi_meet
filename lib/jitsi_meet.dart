@@ -229,26 +229,25 @@ class JitsiMeetingOptions
   String userEmail;
   String iosAppBarRGBAColor;
 
-  Map<FeatureFlagEnum, bool> featureFlags = new HashMap();
+  Map<String, String> featureFlags = new HashMap();
 
   /// Get feature flags Map with keys as String instead of Enum
+  // Map<String, dynamic> parameterFlags = new HashMap();
   /// Useful as an argument sent to the Kotlin/Swift code
-  Map<String, bool> getFeatureFlags()
+  Map<String, String> getFeatureFlags()
   {
-    Map<String, bool> featureFlagsWithStrings = new HashMap();
-
+    Map<String, String> featureFlagsWithStrings = new HashMap();
     featureFlags.forEach((key, value)
     {
-      featureFlagsWithStrings[FeatureFlagHelper.featureFlags[key]] = value;
+      featureFlagsWithStrings[key] = value;
     });
-
     return featureFlagsWithStrings;
   }
 
   @override
   String toString()
   {
-    return 'JitsiMeetingOptions{room: $room, serverURL: $serverURL, subject: $subject, token: $token, audioMuted: $audioMuted, audioOnly: $audioOnly, videoMuted: $videoMuted, userDisplayName: $userDisplayName, userEmail: $userEmail, iosAppBarRGBAColor :$iosAppBarRGBAColor, featureFlags: $featureFlags }';
+    return 'JitsiMeetingOptions{room: $room, serverURL: $serverURL, subject: $subject, token: $token, audioMuted: $audioMuted, audioOnly: $audioOnly, videoMuted: $videoMuted, userDisplayName: $userDisplayName, userEmail: $userEmail, iosAppBarRGBAColor :$iosAppBarRGBAColor, featureFlags: $featureFlags, }';
   }
 
 /* Not used yet, needs more research
